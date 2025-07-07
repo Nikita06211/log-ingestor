@@ -1,6 +1,8 @@
 import express from "express";
-import {PrismaClient} from "@prisma/client";
-import { logSchema } from "../validators/logValidator";
+import { logSchema } from "../validators/logValidator.js";
+import pkg from "@prisma/client";
+const { PrismaClient } = pkg;
+
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -17,7 +19,7 @@ router.post("/",async(req,res)=>{
         });
 
         const io = req.app.get("io");
-        io.emit("new log ", log);
+        io.emit("new_log ", log);
 
         res.status(201).json(log);
     }

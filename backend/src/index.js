@@ -3,7 +3,7 @@ import http from "http";
 import {Server} from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
-import logsRouter from "./router/logs.js";
+import logsRouter from "./routes/logs.js";
 
 
 dotenv.config();
@@ -29,7 +29,7 @@ app.get("/",(_,res)=> res.send("Log Ingestir API running"));
 
 const PORT = process.env.PORT ||4000;
 
-app.listen(PORT, ()=>{
+server.listen(PORT, ()=>{
     console.log(`Backend running on PORT ${PORT}`);
 })
 
