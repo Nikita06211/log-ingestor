@@ -15,6 +15,10 @@ router.post("/",async(req,res)=>{
                 timestamp: new Date(req.body.timestamp),
             },
         });
+
+        const io = req.app.get("io");
+        io.emit("new log ", log);
+
         res.status(201).json(log);
     }
     catch(err){
