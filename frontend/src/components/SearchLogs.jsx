@@ -1,29 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 export default function SearchLogs() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
+  const [searchHistory, setSearchHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({});
 
+  useEffect(()=>{
+    const stored = localStorage.getItem("searchHistory");
+    if(stored){
+        setSearchHistory(JSON.parse(stored));
+    }
+  },[]);
 
   const handleSearch = async (e) => {
-    e.preventDefault(); // fixed typo
+    e.preventDefault();
     if (!query.trim()) return;
 
     try {
       setLoading(true);
-      const res = await axios.get(
-        `http://localhost:4000/api/logs/search?q=${encodeURIComponent(query)}`
-      );
+      const res = await axios.get(`http://localhost:4000/api/logs/search?q=${encodeURIComponent(query)}`);
       setResults(res.data);
+
+      setSearchHistory((prev) => {
+        const updated = [query, ...prev.filter((q) => q !== query)];
+        const trimmed = updated.slice(0, 10);
+        localStorage.setItem("searchHistory", JSON.stringify(trimmed)); 
+        return trimmed
+      });
     } catch (err) {
       console.error("Search failed: ", err);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleHistoryClick = (q) => {
+    setQuery(q);
+  };
+
+  const handleClearHistory = ()=>{
+    localStorage.removeItem("searchHistory");
+    setSearchHistory([]);
+  }
 
   return (
     <div className="p-4 bg-white rounded-xl shadow-md mt-6">
@@ -42,7 +62,32 @@ export default function SearchLogs() {
           Search
         </button>
       </form>
-    
+
+      {searchHistory.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Recent Searches:</h3>
+            <button
+              onClick={handleClearHistory}
+              className="text-xs text-red-500 hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {searchHistory.map((q, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleHistoryClick(q)}
+                className="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <p>Loading...</p>
       ) : results.length > 0 ? (
@@ -60,7 +105,7 @@ export default function SearchLogs() {
             >
               <p className="text-sm font-medium">{log.message}</p>
               <p className="text-xs text-gray-500">
-                [{log.level}] - {new Date(log.timestamp).toLocaleString()} -{" "}
+                [{log.level}] – {new Date(log.timestamp).toLocaleString()} –{" "}
                 {log.resourceId}
               </p>
             </div>
