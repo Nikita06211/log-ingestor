@@ -1,5 +1,6 @@
 
 import LiveLogFeed from "./components/LiveLogFeed";
+import LogStats from "./components/LogStats";
 import SearchLogs from "./components/SearchLogs";
 
 function App() {
@@ -9,6 +10,7 @@ function App() {
         <h1 className="text-3xl font-bold mb-4">Log Ingestor Dashboard</h1>
         <LiveLogFeed />
         <SearchLogs />
+        <LogStats/>
       </div>
     </div>
   );

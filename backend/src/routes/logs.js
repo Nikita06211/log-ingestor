@@ -94,19 +94,6 @@ router.get("/search", async(req,res)=>{
     }
 });
 
-router.get("/:id",async(req,res)=>{
-    try{
-        const log = await prisma.log.findUnique({
-            where: {id: req.params.id},
-        });
-        if(!log) return res.status(404).json({error:"Log not found"});
-        res.json(log);
-    }
-    catch(err){
-        res.status(500).json({error:"Error retrieving log"});
-    }
-});
-
 router.get("/stats", async(req,res)=>{
     try{
         const levels = ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"];
@@ -120,6 +107,20 @@ router.get("/stats", async(req,res)=>{
     }
     catch(error){
         res.status(500).json({error: "failed to compute stats"});
+    }
+});
+
+
+router.get("/:id",async(req,res)=>{
+    try{
+        const log = await prisma.log.findUnique({
+            where: {id: req.params.id},
+        });
+        if(!log) return res.status(404).json({error:"Log not found"});
+        res.json(log);
+    }
+    catch(err){
+        res.status(500).json({error:"Error retrieving log"});
     }
 });
 
