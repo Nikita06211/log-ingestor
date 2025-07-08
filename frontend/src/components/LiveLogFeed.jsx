@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../utils/axios.js";
 import io from "socket.io-client";
 import Filters from "./Filters";
 import DetailedLogView from "./DetailedLogView";
 
-const socket = io("http://localhost:4000");
+const socket = io("https://log-ingestor-2nlu.onrender.com");
 
 export default function LiveLogFeed() {
   const [logs, setLogs] = useState([]);
@@ -13,7 +13,7 @@ export default function LiveLogFeed() {
 
   const fetchLogs = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/logs", {
+      const res = await axios.get("/api/logs", {
         params: filters,
       });
       setLogs(res.data);

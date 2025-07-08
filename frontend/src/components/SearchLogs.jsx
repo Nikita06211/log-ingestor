@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../utils/axios.js";
 import { getSavedQueries, saveQuery, deleteQuery } from "../utils/storage";
 
 export default function SearchLogs() {
@@ -35,7 +35,7 @@ export default function SearchLogs() {
     try {
       setLoading(true);
       const res = await axios.get(
-        `http://localhost:4000/api/logs/search?q=${encodeURIComponent(query)}`
+        `/api/logs/search?q=${encodeURIComponent(query)}`
       );
       setResults(res.data);
 

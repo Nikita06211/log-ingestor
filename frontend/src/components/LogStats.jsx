@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "../utils/axios.js";
 
 export default function LogStats() {
   const [stats, setStats] = useState({});
@@ -8,7 +8,7 @@ export default function LogStats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/api/logs/stats");
+        const res = await axios.get("api/logs/stats");
         setStats(res.data);
       } catch (err) {
         console.error("Failed to fetch log stats:", err);
