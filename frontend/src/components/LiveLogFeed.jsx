@@ -1,39 +1,69 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import io from "socket.io-client";
 
 const socket = io("http://localhost:4000");
 
-export default function LiveLogFeed(){
-    const [logs,setLogs] = useState([]);
+export default function LiveLogFeed() {
+  const [logs, setLogs] = useState([]);
+  const [levelFilter, setLevelFilter] = useState("");
+  const [resourceFilter, setResourceFilter] = useState("");
 
-    useEffect(()=>{
-        const fetchLogs = async()=>{
-            try{
-                const res = await axios.get("http://localhost:4000/api/logs");
-                setLogs(res.data);
-            }
-            catch(err){
-                console.error("Failed to fetch logs: ",err);
-                
-            }
-        };
-        fetchLogs();
-    },[]);
+  useEffect(() => {
+    fetchLogs();
+  }, [levelFilter, resourceFilter]);
 
-    useEffect(()=>{
-        socket.on("new_log",(log)=>{
-            setLogs((prevLogs)=>[log,...prevLogs.slice(0,99)]);
-        });
-        return ()=>{
-            socket.off("new_log");
-        };
-    },[]);
+  const fetchLogs = async () => {
+    try {
+      const res = await axios.get("http://localhost:4000/api/logs", {
+        params: {
+          level: levelFilter || undefined,
+          resourceId: resourceFilter || undefined,
+        },
+      });
+      setLogs(res.data);
+    } catch (err) {
+      console.error("Failed to fetch logs: ", err);
+    }
+  };
 
-    return(
-        <div className="p-4 bg-white rounded-xl shadow-md">
-      <h2 className="text-xl font-bold mb-3">📡 Live Logs</h2>
+  useEffect(() => {
+    socket.on("new_log", (log) => {
+      const matchLevel = !levelFilter || log.level === levelFilter;
+      const matchResource = !resourceFilter || log.resourceId === resourceFilter;
+      if (matchLevel && matchResource) {
+        setLogs((prev) => [log, ...prev.slice(0, 99)]);
+      }
+    });
+    return () => socket.off("new_log");
+  }, [levelFilter, resourceFilter]);
+
+  return (
+    <div className="p-4 bg-white rounded-xl shadow-md">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+        <h2 className="text-xl font-bold">📡 Live Logs</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={levelFilter}
+            onChange={(e) => setLevelFilter(e.target.value)}
+            className="border px-2 py-1 rounded text-sm"
+          >
+            <option value="">All Levels</option>
+            <option value="ERROR">ERROR</option>
+            <option value="WARN">WARN</option>
+            <option value="INFO">INFO</option>
+            <option value="DEBUG">DEBUG</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Filter by Resource ID"
+            value={resourceFilter}
+            onChange={(e) => setResourceFilter(e.target.value)}
+            className="border px-2 py-1 rounded text-sm"
+          />
+        </div>
+      </div>
+
       <div className="max-h-[500px] overflow-y-auto">
         {logs.map((log, index) => (
           <div
@@ -55,6 +85,5 @@ export default function LiveLogFeed(){
         ))}
       </div>
     </div>
-    )
-    
+  );
 }
