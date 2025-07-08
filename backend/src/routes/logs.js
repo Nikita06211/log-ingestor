@@ -35,43 +35,45 @@ router.post("/",async(req,res)=>{
     }
 });
 
-router.get("/",async(req,res)=>{
-    const{
-        level,
-        resourceId,
-        traceId,
-        spanId,
-        commit,
-        start,
-        end,
-    } = req.query;
+router.get("/", async (req, res) => {
+  const {
+    level,
+    resourceId,
+    traceId,
+    spanId,
+    commit,
+    start,
+    end,
+  } = req.query;
 
-    const where = {
-        ...(level && {level}),
-        ...(resourceId && {resourceId}),
-        ...(traceId && {traceId}),
-        ...(spanId && {spanId}),
-        ...(commit && {commit}),
-        ...(start || end? {
-            timestamp:{
-                ...(start && {gte: new Date(start)}),
-                ...(end && {lte: new Date(end)}),
-            },
-        }:{}),
-    };
-    try{
-        const logs = await prisma.log.findMany({
-            where,
-            orderBy: {timestamp:"desc"},
-            take:100,
-        });
-        res.json(logs);
-    }
-    catch(err){
-        console.log(err);
-        res.status(500).json({error:"Error fetching logs"});
-    }
+  const filters = [];
+
+  if (level) filters.push({ level });
+  if (resourceId) filters.push({ resourceId });
+  if (traceId) filters.push({ traceId });
+  if (spanId) filters.push({ spanId });
+  if (commit) filters.push({ commit });
+  if (start || end) {
+    const timestamp = {};
+    if (start) timestamp.gte = new Date(start);
+    if (end) timestamp.lte = new Date(end);
+    filters.push({ timestamp });
+  }
+
+  try {
+    const logs = await prisma.log.findMany({
+      where: filters.length ? { OR: filters } : {},
+      orderBy: { timestamp: "desc" },
+      take: 100,
+    });
+
+    res.json(logs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error fetching logs" });
+  }
 });
+
 
 router.get("/search", async(req,res)=>{
     const {q} = req.query;

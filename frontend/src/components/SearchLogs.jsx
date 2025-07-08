@@ -5,6 +5,8 @@ export default function SearchLogs() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({});
+
 
   const handleSearch = async (e) => {
     e.preventDefault(); // fixed typo
@@ -40,7 +42,7 @@ export default function SearchLogs() {
           Search
         </button>
       </form>
-
+    
       {loading ? (
         <p>Loading...</p>
       ) : results.length > 0 ? (
