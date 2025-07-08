@@ -73,6 +73,25 @@ router.get("/",async(req,res)=>{
     }
 });
 
+router.get("/search", async(req,res)=>{
+    const {q} = req.query;
+    if(!q || typeof q != "string") return res.status(400).json({error: "Missing query parameter"});
+    console.log("Search query:", q);
+    try{
+        const logs = await prisma.$queryRaw`
+            SELECT * FROM "Log"
+            WHERE to_tsvector('english',"message") @@ plainto_tsquery('english', ${q})
+            ORDER BY "timestamp" DESC
+            LIMIT 100;
+        `;
+        res.json(logs);
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error: "search failed"});
+    }
+});
+
 router.get("/:id",async(req,res)=>{
     try{
         const log = await prisma.log.findUnique({
@@ -83,28 +102,6 @@ router.get("/:id",async(req,res)=>{
     }
     catch(err){
         res.status(500).json({error:"Error retrieving log"});
-    }
-});
-
-router.get("/search", async(req,res)=>{
-    const q = req.query.q;
-    if(!q) return res.status(400).json({error: "Missing query parameter"});
-
-    try{
-        const logs = await prisma.log.findMany({
-            where:{
-                message:{
-                    search:q,
-                },
-            },
-            orderBy: {timestamp: "desc"},
-            take: 100,
-        });
-        res.json(logs);
-    }
-    catch(err){
-        console.error(err);
-        res.status(500).json({error: "search failed"});
     }
 });
 
