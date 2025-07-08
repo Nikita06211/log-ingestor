@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import io from "socket.io-client";
 import Filters from "./Filters";
+import DetailedLogView from "./DetailedLogView";
 
 const socket = io("http://localhost:4000");
 
 export default function LiveLogFeed() {
   const [logs, setLogs] = useState([]);
   const [filters, setFilters] = useState({});
+  const [selectedLog, setSelectedLog] = useState(null);
 
   const fetchLogs = async () => {
     try {
@@ -63,6 +65,7 @@ export default function LiveLogFeed() {
         {logs.map((log, index) => (
           <div
             key={log.id || index}
+            onClick={() => setSelectedLog(log)}
             className={`p-2 mb-1 border-l-4 ${
               log.level === "ERROR"
                 ? "border-red-500"
@@ -81,6 +84,7 @@ export default function LiveLogFeed() {
           </div>
         ))}
       </div>
+      <DetailedLogView log={selectedLog} onClose={() => setSelectedLog(null)} />
     </div>
   );
 }
