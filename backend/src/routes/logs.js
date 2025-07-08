@@ -1,10 +1,7 @@
 import express from "express";
 import { logSchema } from "../validators/logValidator.js";
-import pkg from "@prisma/client";
-const { PrismaClient } = pkg;
+import prisma from "../utils/prisma.js";
 
-
-const prisma = new PrismaClient();
 const router = express.Router();
 
 

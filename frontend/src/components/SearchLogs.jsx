@@ -1,18 +1,32 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { getSavedQueries, saveQuery, deleteQuery } from "../utils/storage";
 
 export default function SearchLogs() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
+  const [savedQueries, setSavedQueries] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(()=>{
+  useEffect(() => {
+    setSavedQueries(getSavedQueries());
+  }, []);
+
+  useEffect(() => {
     const stored = localStorage.getItem("searchHistory");
-    if(stored){
-        setSearchHistory(JSON.parse(stored));
+    if (stored) {
+      setSearchHistory(JSON.parse(stored));
     }
-  },[]);
+  }, []);
+
+  const handleSaveQuery = () => {
+    const name = prompt("Enter a name for this query:");
+    if (name) {
+      saveQuery(name, query);
+      setSavedQueries(getSavedQueries());
+    }
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -20,14 +34,16 @@ export default function SearchLogs() {
 
     try {
       setLoading(true);
-      const res = await axios.get(`http://localhost:4000/api/logs/search?q=${encodeURIComponent(query)}`);
+      const res = await axios.get(
+        `http://localhost:4000/api/logs/search?q=${encodeURIComponent(query)}`
+      );
       setResults(res.data);
 
       setSearchHistory((prev) => {
         const updated = [query, ...prev.filter((q) => q !== query)];
         const trimmed = updated.slice(0, 10);
-        localStorage.setItem("searchHistory", JSON.stringify(trimmed)); 
-        return trimmed
+        localStorage.setItem("searchHistory", JSON.stringify(trimmed));
+        return trimmed;
       });
     } catch (err) {
       console.error("Search failed: ", err);
@@ -40,10 +56,10 @@ export default function SearchLogs() {
     setQuery(q);
   };
 
-  const handleClearHistory = ()=>{
+  const handleClearHistory = () => {
     localStorage.removeItem("searchHistory");
     setSearchHistory([]);
-  }
+  };
 
   return (
     <div className="p-4 bg-white rounded-xl shadow-md mt-6">
@@ -60,6 +76,13 @@ export default function SearchLogs() {
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Search
+        </button>
+        <button
+          type="button"
+          onClick={handleSaveQuery}
+          className="px-3 py-2 bg-gray-200 text-sm rounded hover:bg-gray-300"
+        >
+          💾
         </button>
       </form>
 
@@ -83,6 +106,42 @@ export default function SearchLogs() {
               >
                 {q}
               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {savedQueries.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold mb-2">Saved Queries:</h3>
+          <div className="space-y-2">
+            {savedQueries.map((q, idx) => (
+              <div
+                key={idx}
+                className="flex justify-between items-center bg-gray-100 rounded px-3 py-2"
+              >
+                <div className="flex flex-col text-xs">
+                  <span className="font-medium">{q.name}</span>
+                  <span className="text-gray-600">{q.query}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setQuery(q.query)}
+                    className="text-blue-600 text-xs hover:underline"
+                  >
+                    Load
+                  </button>
+                  <button
+                    onClick={() => {
+                      deleteQuery(q.name);
+                      setSavedQueries(getSavedQueries());
+                    }}
+                    className="text-red-500 text-xs hover:underline"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
