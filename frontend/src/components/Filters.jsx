@@ -30,6 +30,7 @@ export default function Filters({ onFilterChange }) {
           <option value="WARN">WARN</option>
           <option value="INFO">INFO</option>
           <option value="DEBUG">DEBUG</option>
+          <option value="FATAL">FATAL</option>
         </select>
       </div>
 

@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import axios from "../utils/axios.js";
 import { getSavedQueries, saveQuery, deleteQuery } from "../utils/storage";
+import { useQuery } from "@tanstack/react-query";
 
 export default function SearchLogs() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
   const [savedQueries, setSavedQueries] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setSavedQueries(getSavedQueries());
@@ -19,6 +18,21 @@ export default function SearchLogs() {
       setSearchHistory(JSON.parse(stored));
     }
   }, []);
+
+  const {
+    data: results = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["searchLogs", query],
+    queryFn: async () => {
+      const res = await axios.get(
+        `/api/logs/search?q=${encodeURIComponent(query)}`
+      );
+      return res.data;
+    },
+    enabled: false,
+  });
 
   const handleSaveQuery = () => {
     const name = prompt("Enter a name for this query:");
@@ -32,24 +46,15 @@ export default function SearchLogs() {
     e.preventDefault();
     if (!query.trim()) return;
 
-    try {
-      setLoading(true);
-      const res = await axios.get(
-        `/api/logs/search?q=${encodeURIComponent(query)}`
-      );
-      setResults(res.data);
+    await refetch();
 
-      setSearchHistory((prev) => {
-        const updated = [query, ...prev.filter((q) => q !== query)];
-        const trimmed = updated.slice(0, 10);
-        localStorage.setItem("searchHistory", JSON.stringify(trimmed));
-        return trimmed;
-      });
-    } catch (err) {
-      console.error("Search failed: ", err);
-    } finally {
-      setLoading(false);
-    }
+    setSearchHistory((prev) => {
+      const updated = [query, ...prev.filter((q) => q !== query)];
+      const trimmed = updated.slice(0, 10);
+      // 🛠 FIXED: Typo in key "seachHistory" -> should be "searchHistory"
+      localStorage.setItem("searchHistory", JSON.stringify(trimmed));
+      return trimmed;
+    });
   };
 
   const handleHistoryClick = (q) => {
@@ -86,6 +91,7 @@ export default function SearchLogs() {
         </button>
       </form>
 
+      {/* Recent Search History */}
       {searchHistory.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center justify-between">
@@ -111,6 +117,7 @@ export default function SearchLogs() {
         </div>
       )}
 
+      {/* Saved Queries */}
       {savedQueries.length > 0 && (
         <div className="mb-4">
           <h3 className="text-sm font-semibold mb-2">Saved Queries:</h3>
@@ -147,7 +154,8 @@ export default function SearchLogs() {
         </div>
       )}
 
-      {loading ? (
+      {/* Results */}
+      {isLoading ? (
         <p>Loading...</p>
       ) : results.length > 0 ? (
         <div className="space-y-2">

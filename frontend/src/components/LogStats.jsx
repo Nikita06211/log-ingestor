@@ -1,32 +1,30 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axios from "../utils/axios.js";
 
 export default function LogStats() {
-  const [stats, setStats] = useState({});
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get("api/logs/stats");
-        setStats(res.data);
-      } catch (err) {
-        console.error("Failed to fetch log stats:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
+  const {
+    data: stats = {},
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["log-stats"],
+    queryFn: async()=>{
+      const res = await axios.get("/api/logs/stats");
+      return res.data;
+    }
+  });
 
   const levels = ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"];
 
   return (
     <div className="p-4 bg-white rounded-xl shadow-md m-6">
       <h2 className="text-xl font-bold mb-4">📊 Log Level Statistics</h2>
-      {loading ? (
+      {isLoading ? (
         <p>Loading stats...</p>
+      ) : isError?(
+        <p className="text-red-600">Error: {error.message}</p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
           {levels.map((level) => (

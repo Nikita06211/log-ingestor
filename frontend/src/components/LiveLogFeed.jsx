@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import {useQuery} from "@tanstack/react-query";
 import axios from "../utils/axios.js";
 import io from "socket.io-client";
 import Filters from "./Filters";
@@ -11,20 +12,22 @@ export default function LiveLogFeed() {
   const [filters, setFilters] = useState({});
   const [selectedLog, setSelectedLog] = useState(null);
 
-  const fetchLogs = async () => {
-    try {
-      const res = await axios.get("/api/logs", {
-        params: filters,
-      });
-      setLogs(res.data);
-    } catch (err) {
-      console.error("Failed to fetch logs: ", err);
-    }
-  };
+  const {data, refetch, isLoading, isError} = useQuery({
+    queryKey: ["logs", filters],
+    queryFn: async ()=>{
+      const res = await axios.get("/api/logs", {params: filters});
+      return res.data;
+    },
+    keepPreviousData: true,
+  });
 
   useEffect(() => {
-    fetchLogs();
-  }, [filters]);
+    if(data) setLogs(data);
+  }, [data]);
+
+  useEffect(()=>{
+    refetch();
+  }, [filters,refetch]);
 
   useEffect(() => {
     socket.on("new_log", (log) => {
